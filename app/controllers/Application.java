@@ -3,6 +3,7 @@ package controllers;
 import com.avaje.ebean.Ebean;
 import models.Notification;
 
+import models.dao.NotificationDao;
 import play.*;
 import play.api.mvc.RequestHeader;
 import play.data.Form;
@@ -34,6 +35,18 @@ public class Application extends Controller {
         return ok(index.render(notForm));
     }
 
+    // Note: later on this could be changed to dep injection with google guice, instead of this manual workaround
+    // and then get rid of static methods as well.
+    private static NotificationDao notificationDao;
+
+    private static NotificationDao getNotificationDao() {
+        return notificationDao == null ? new NotificationDao(): notificationDao;
+    }
+
+    public static void setNotificationDao(NotificationDao notificationDao) {
+        Application.notificationDao = notificationDao;
+    }
+
     @Transactional
     public static Result add() {
         Form<Notification> filledForm = notForm.bindFromRequest();
@@ -43,7 +56,7 @@ public class Application extends Controller {
         }
 
         Notification created = filledForm.get();
-        JPA.em().persist(created);
+        getNotificationDao().persist(created);
 
         return ok(notes.render(created));
     }
